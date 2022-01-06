@@ -1,12 +1,26 @@
-from parser import Parser
-from genetic_algorithm import GeneticAlgorithm
 import numpy as np
+from genetic_algorithm import GeneticAlgorithm
+from tsp import TspDrone
+from parser import Parser
+import multiprocessing
+
 
 GA = GeneticAlgorithm()
+TSPD = TspDrone
 
-p = Parser("data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-10-n5.txt",
-"data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/solutions/uniform-10-n5-DP.txt")
-p.get_input_data()
+path = 'Raport/'
+
+data_paths = [
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-1-n5.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-12-n6.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-21-n7.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-31-n8.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-41-n9.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-51-n10.txt",
+    "data/pcbouman-eur-TSP-D-Instances-8a6d795/uniform/uniform-61-n20.txt"
+]
+
+p = Parser(data_paths[0])
 
 points = np.array([p.X,p.Y])
 points = points.T
@@ -23,56 +37,26 @@ for el in points:
     drone_dist.append(d.tolist())
 drone_dist = np.array(drone_dist)
 
-nr_params = drone_dist.shape[0]
-nr_of_iteration = 1000
+nr_params = points.shape[0]
+nr_of_iteration = 200
 nr_of_population = 50
+nr_of_experiments = 30
 
-
-def check_cycle(v):
-    result = [v[0]]
-    for el in range(1,len(v)):
-        if v[el-1] != v[el]:
-            result.append(v[el])
-    return not(len(np.unique(result)) == len(result))
-
-def TSP(x, nr_of_nodes):
-    x = x.astype(int)
-    idx_dr = np.where(x[1] == 1)[0]
-    idx_tr = np.where(x[1] == 0)[0]
-    tour_dr = x[0][idx_dr]
-    tour_tr = x[0][idx_tr]
-
-    if np.array_equal(np.unique(x),np.arange(nr_of_nodes)) != True:
-        return 1000
-
-    if check_cycle(tour_tr):
-        return 1000
-
-    count = 0
-    for el in np.unique(tour_dr):
-        if el in np.unique(tour_tr):
-            count+=1
-    
-    if count == 0:
-        return 1000
-
-    # print(x)
-    # print(tour_dr)
-    # print(tour_tr)
-    # print("\n")
-
-    # print(np.unique(tour_tr))
-    # print(np.unique(tour_dr))
-
-    tour_tr = np.append(tour_tr,[0])
-    return truck_dist[tour_tr[:-1], tour_tr[1:]].sum() + drone_dist[tour_dr[:-1], tour_dr[1:]].sum()
-
-GA.set_fitness_function(TSP)
+GA.set_evaluation_function(TSPD(truck_dist, drone_dist))
 GA.set_parameters(nr_params)
 GA.set_population_size(nr_of_population)
 GA.set_iteration(nr_of_iteration)
-# GA.test()
-GA.run(1)
+# GA.run(1)
+# GA.debug()
 
-# x = np.array([[0, 2, 2, 2, 4, 4, 2, 2, 3, 3], [0, 1, 1, 1, 0, 0, 1, 1, 1, 1]])
-# TSP(x, nr_params)
+
+if __name__ == '__main__':
+
+    experiments = list(range(nr_of_experiments))
+    with multiprocessing.Pool(int(nr_of_experiments)) as p:
+        GA.set_parameters(nr_params)
+        GA.set_population_size(nr_of_population)
+        GA.set_iteration(nr_of_iteration)
+        result = p.map(GA.run, experiments)   
+    min_eval_values, _ = zip(*result)
+    np.savez(path + "p_" + str(nr_params) + "_evaluation_values", min_eval_values)

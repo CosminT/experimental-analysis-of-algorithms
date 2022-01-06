@@ -1,20 +1,20 @@
 class Parser:
-    def __init__(self, file_path, file_path_solution):        
+    def __init__(self, file_path):        
         self.speed_of_truck = None
         self.speed_of_drone = None
         self.number_of_nodes = None
         self.PATH = file_path
-        self.PATH_SOL = file_path_solution
         self.X = []
         self.Y = []
         self.loc = []
+        self.get_input_data()
 
     def check_numbers(self, el):
         try:
             float(el)
             return True
         except ValueError:
-            return False
+            return False       
 
     def read_file(self, file_path):
         data = []
