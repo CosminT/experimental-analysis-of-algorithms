@@ -6,7 +6,7 @@ class TspDrone:
         self.truck_dist = truck_dist
         self.drone_dist = drone_dist
 
-    def get_score(self, x):
+    def get_score(self, x, return_road=False):
         x = x.astype(int)
         p = [0]
         for el in range(x.shape[1]):
@@ -17,6 +17,8 @@ class TspDrone:
 
         result_drum = []
         result_drum_type = []
+        road = []
+        road_type = []
         for el in range(len(p) - 1):
             drum = []
             drum_type = []
@@ -28,16 +30,10 @@ class TspDrone:
 
             for d in range(len(data_type)):
                 if drone:
-                    if data_type[d] == 1:
-                        # drone = True
-                        drum.append([from_d, data[d]])
-                        drum.append([data[d], from_d])
-                        drum_type.append(1)
-                    else:
-                        drone = False
-                        drum.append([from_d, data[d]])
-                        from_d = data[d]
-                        drum_type.append(1)
+                    drone = False
+                    drum.append([from_d, data[d]])
+                    from_d = data[d]
+                    drum_type.append(1)
 
                 else:
                     drum.append([from_t, data[d]])
@@ -49,6 +45,8 @@ class TspDrone:
             drum_type.append(1)
             drum_type.append(0)
             result_drum.append(drum)
+            road += drum
+            road_type += drum_type
             result_drum_type.append(drum_type)
 
         dist = 0
@@ -60,9 +58,17 @@ class TspDrone:
             idx_tr = np.where(y == 0)
             tour_dr = x[idx_dr]
             tour_tr = x[idx_tr]
-            dist += max(
-                self.truck_dist[tour_tr[:-1], tour_tr[1:]].sum(),
-                self.drone_dist[tour_dr[:-1], tour_dr[1:]].sum()
-            )
+            if len(tour_tr) == 1:
+                dist += max(
+                    self.truck_dist[tour_tr[0][0], tour_tr[0][1]].sum(),
+                    self.drone_dist[tour_dr[:-1], tour_dr[1:]].sum(),
+                )
+            else:
+                dist += max(
+                    self.truck_dist[tour_tr[:-1], tour_tr[1:]].sum(),
+                    self.drone_dist[tour_dr[:-1], tour_dr[1:]].sum()
+                )
+        if return_road:
+            return dist, road, road_type
 
         return dist

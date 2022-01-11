@@ -62,6 +62,15 @@ class GeneticAlgorithm:
     def set_iteration(self, p):
         self.MAX = p
 
+    def set_mutation_probability(self, p):
+        self.mutation_prob = p
+
+    def set_mutation_drone_probability(self, p):
+        self.mutation_prob_drone = p
+
+    def set_chromosome_probability(self, p):
+        self.chromosome_prob = p
+
     def set_population_size(self, p):
         self.population_size = p
         self.population = np.array([self.generate() for _ in range(p)])
@@ -219,8 +228,8 @@ class GeneticAlgorithm:
             children = self.cross_over(parents)
             self.mutation(children)
             if generation % 20 == 0:
-                # min(self.min_eval_values)
-                print('\x1b[6;30;42m' + str(i) + '\x1b[0m', generation, "Fitness:", min(self.max_fitness_values))
+                print('\x1b[6;30;42m' + str(i) + '\x1b[0m', generation, min(self.min_eval_values), "Fitness:", min(self.max_fitness_values))
             generation += 1 
         print(self.BEST_TOUR)
-        return self.min_eval_values, self.max_fitness_values
+        print(min(self.min_eval_values))
+        return self.min_eval_values, self.max_fitness_values, self.BEST_TOUR
